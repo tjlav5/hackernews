@@ -2,6 +2,7 @@
 
 var FeedParser = require('feedparser')
   , request = require('request')
+  , htmlToText = require('html-to-text')
   , posts = []
   , colors = require('colors')
   , prompt = require('prompt')
@@ -52,11 +53,18 @@ function promptForPost() {
       if(isNaN(i) || i > posts.length || i < 1) {
         console.log("Invalid post number");
       } else {
-        exec(shellOpenCommand + posts[i - 1].link, function(error){
-          if(error) throw error;
+        request(posts[i - 1].link, function (error, response, body) {
+          if (!error && response.statusCode == 200) {
+            var text = htmlToText.fromString(body, {
+              wordwrap: 120
+            });
+            console.log(text);
+            promptForPost();
+          } else {
+            return console.error('Failed to load post')
+          }
         });
       }
-      promptForPost();
     }
   });
 }
